@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace ezx6tools
 {
     internal static class Program
@@ -6,12 +8,53 @@ namespace ezx6tools
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static async Task Main(string[] args)
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            if (args.Length == 0)
+            {
+                _ = Checks(); // Run the checks in the background
+                // To customize application configuration such as set high DPI settings or default font,
+                // see https://aka.ms/applicationconfiguration.
+                ApplicationConfiguration.Initialize();
+                Application.Run(new Form1());
+            }
+            else
+            {
+                if (args[0] == "svc1")
+                {
+                    var service = new Svc1();
+                    await service.Run();
+                }
+            }
+        }
+        static async Task Checks()
+        {
+            bool svc1TaskNotExists;
+            var psi = new ProcessStartInfo
+            {
+                FileName = "schtasks.exe",
+                Arguments = "/query /tn ezx6tools-svc1",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using (Process? process = Process.Start(psi))
+            {
+                await process?.WaitForExitAsync()!;
+                svc1TaskNotExists = process?.ExitCode == 1;
+            }
+            if (svc1TaskNotExists)
+            {
+                psi = new ProcessStartInfo
+                {
+                    FileName = "schtasks.exe",
+                    Arguments = $"/create /tn ezx6tools-svc1 /tr \"{Environment.ProcessPath} svc1\" /sc onlogon /f",
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    Verb = "runas"
+                };
+                Process.Start(psi);
+            }
         }
     }
 }
