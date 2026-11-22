@@ -22,8 +22,7 @@ namespace ezx6tools
             {
                 if (args[0] == "svc1")
                 {
-                    var service = new Svc1();
-                    await service.Run();
+                    await Svc1.Run();
                 }
             }
         }
@@ -55,6 +54,14 @@ namespace ezx6tools
                 };
                 Process.Start(psi);
             }
+            Directory.CreateDirectory(Path.Join(Application.LocalUserAppDataPath, "ezx6tools"));
+            psi = new ProcessStartInfo
+            {
+                FileName = Environment.ProcessPath,
+                Arguments = "svc1",
+                UseShellExecute = true
+            };
+            Process.Start(psi);
         }
     }
 }
