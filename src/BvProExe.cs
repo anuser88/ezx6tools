@@ -28,7 +28,7 @@ namespace ezx6tools
             while (true)
             {
                 using var server = new NamedPipeServerStream(
-                    "ezx6t_tools_bvpro_svc1hear",
+                    "ezx6t_tools_svc1_bvprohear",
                     PipeDirection.In
                 );
                 await server.WaitForConnectionAsync();
@@ -102,7 +102,7 @@ namespace ezx6tools
 						ct = cts.Token;
 					}
                     _ = Refresher(1800000, cts.Token);
-					BvProConfigFormat targets = await ReadConfigs();
+					BvProConfigFormat targets = ReadConfigs();
 					if (!targets.Activated || targets.Targets == null || targets.Targets.Length == 0) await Task.Delay(-1, ct);
                     ct.ThrowIfCancellationRequested();
 					string[] proxies = await GetProxies(ct);
@@ -259,11 +259,11 @@ namespace ezx6tools
             }
             catch { }
         }
-		private static async Task<BvProConfigFormat> ReadConfigs()
+		public static BvProConfigFormat ReadConfigs()
 		{
 			try
 			{
-				string config = File.ReadAllText(Path.Join(Application.LocalUserAppDataPath, "ezx6tools", "bvpro_config.txt"));
+				string config = File.ReadAllText(Path.Join(Environment.SpecialFolder.LocalApplicationData.ToString(), "ezx6tools", "bvprocfg.json"));
                 return JsonSerializer.Deserialize<BvProConfigFormat>(config) ?? new BvProConfigFormat { Activated = false, Targets = [] };
             }
 			catch

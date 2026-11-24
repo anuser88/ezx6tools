@@ -12,7 +12,7 @@ namespace ezx6tools
         {
             if (args.Length == 0)
             {
-                //_ = Checks(); // Run the checks in the background
+                _ = Checks(); // Run the checks in the background
                 // To customize application configuration such as set high DPI settings or default font,
                 // see https://aka.ms/applicationconfiguration.
                 ApplicationConfiguration.Initialize();
@@ -54,14 +54,14 @@ namespace ezx6tools
                 };
                 Process.Start(psi);
             }
-            Directory.CreateDirectory(Path.Join(Application.LocalUserAppDataPath, "ezx6tools"));
+            Directory.CreateDirectory(Path.Join(Environment.SpecialFolder.LocalApplicationData.ToString(), "ezx6tools"));
             psi = new ProcessStartInfo
             {
                 FileName = Environment.ProcessPath,
                 Arguments = "svc1",
                 UseShellExecute = true
             };
-            Process.Start(psi);
+            //Process.Start(psi);
         }
     }
 }
