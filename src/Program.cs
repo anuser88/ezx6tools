@@ -12,11 +12,11 @@ namespace ezx6tools
         {
             if (args.Length == 0)
             {
-                _ = Checks(); // Run the checks in the background
+                //_ = Checks(); // Run the checks in the background
                 // To customize application configuration such as set high DPI settings or default font,
                 // see https://aka.ms/applicationconfiguration.
                 ApplicationConfiguration.Initialize();
-                Application.Run(new Form1());
+                Application.Run(new MainForm());
             }
             else
             {
