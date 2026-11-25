@@ -30,6 +30,9 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
+      
+      - name: Restore
+        run: dotnet restore .\src\ezx6tools.csproj
 
       - name: Publish
         run: |
@@ -38,6 +41,9 @@ jobs:
             -r win-x64 `
             --self-contained true `
             -p:PublishSingleFile=true `
+            -p:PublishTrimmed=true `
+            -p:TrimMode=full `
+            -p:InvariantGlobalization=true `
             -o publish
 
       - name: Create Release
