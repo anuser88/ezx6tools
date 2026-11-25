@@ -26,18 +26,6 @@ jobs:
           $v = Get-Content version.json | ConvertFrom-Json
           "version=$($v.version)" >> $env:GITHUB_OUTPUT
 
-      - name: Check existing release
-        id: check
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          $tag = "v${{ steps.version.outputs.version }}"
-          $result = gh release view $tag 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            throw "Release $tag already exists!"
-          }
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
