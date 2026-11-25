@@ -263,7 +263,7 @@ namespace ezx6tools
 		{
 			try
 			{
-				string config = File.ReadAllText(Path.Join(Environment.SpecialFolder.LocalApplicationData.ToString(), "ezx6tools", "bvprocfg.json"));
+				string config = File.ReadAllText(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ezx6tools", "bvprocfg.json"));
                 return JsonSerializer.Deserialize<BvProConfigFormat>(config) ?? new BvProConfigFormat { Activated = false, Targets = [] };
             }
 			catch

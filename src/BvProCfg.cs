@@ -42,7 +42,7 @@ namespace ezx6tools
         {
             try
             {
-                File.WriteAllText(Path.Join(Environment.SpecialFolder.LocalApplicationData.ToString(), "ezx6tools", "bvprocfg.json"), JsonSerializer.Serialize(config));
+                File.WriteAllText(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ezx6tools", "bvprocfg.json"), JsonSerializer.Serialize(config));
                 Save.Enabled = false;
                 Discard.Enabled = false;
                 TheLabel.Text = "Config saved successfully.";

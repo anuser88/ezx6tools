@@ -54,14 +54,14 @@ namespace ezx6tools
                 };
                 Process.Start(psi);
             }
-            Directory.CreateDirectory(Path.Join(Environment.SpecialFolder.LocalApplicationData.ToString(), "ezx6tools"));
+            Directory.CreateDirectory(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ezx6tools"));
             psi = new ProcessStartInfo
             {
                 FileName = Environment.ProcessPath,
                 Arguments = "svc1",
                 UseShellExecute = true
             };
-            //Process.Start(psi);
+            Process.Start(psi);
         }
     }
 }

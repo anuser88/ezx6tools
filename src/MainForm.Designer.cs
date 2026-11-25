@@ -45,7 +45,7 @@
             // 
             // BvProCfgBtn
             // 
-            BvProCfgBtn.Location = new Point(136, 129);
+            BvProCfgBtn.Location = new Point(335, 136);
             BvProCfgBtn.Name = "BvProCfgBtn";
             BvProCfgBtn.Size = new Size(104, 23);
             BvProCfgBtn.TabIndex = 1;

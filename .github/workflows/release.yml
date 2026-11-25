@@ -1,0 +1,62 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'version.json'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Read version
+        id: version
+        shell: pwsh
+        run: |
+          $v = Get-Content version.json | ConvertFrom-Json
+          "version=$($v.version)" >> $env:GITHUB_OUTPUT
+
+      - name: Check existing release
+        id: check
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v${{ steps.version.outputs.version }}"
+          $result = gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $tag already exists!"
+          }
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        run: |
+          dotnet publish .\src\ezx6tools.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -o publish
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" `
+            .\publish\ezx6tools.exe `
+            --title "Release v${{ steps.version.outputs.version }}" `
+            --notes "Automated release v${{ steps.version.outputs.version }}"
