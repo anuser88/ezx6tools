@@ -107,7 +107,7 @@ namespace ezx6tools
                     ct.ThrowIfCancellationRequested();
 					string[] proxies = await GetProxies(ct);
 					Console.WriteLine($"Found {proxies.Length} proxies.");
-					HttpClient[] proxiedClients = await TestProxies(proxies, targets.Targets ?? [], 5000, ct);
+					HttpClient[] proxiedClients = await TestProxies(proxies, targets.Targets ?? [], 4200, ct);
 					Console.WriteLine($"Found {proxiedClients.Length} live proxies.");
                     await RunProxies(proxiedClients, targets.Targets ?? [], ct);
 				}
@@ -159,6 +159,7 @@ namespace ezx6tools
 			for (int i = 0; i < wc; i++)
 			{
 				tasks[i] = TestProxyWorker(queue, ProxiedClients, targets[i % targets.Length], _PCLock, ct);
+				await Task.Delay(125);
 			}
 			await Task.WhenAll(tasks);
 			return [..ProxiedClients];
