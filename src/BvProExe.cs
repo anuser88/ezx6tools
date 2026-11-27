@@ -106,8 +106,10 @@ namespace ezx6tools
 					if (!targets.Activated || targets.Targets == null || targets.Targets.Length == 0) await Task.Delay(-1, ct);
                     ct.ThrowIfCancellationRequested();
 					string[] proxies = await GetProxies(ct);
-					HttpClient[] proxiedClients = await TestProxies(proxies, targets.Targets ?? [], 100, ct);
-					await RunProxies(proxiedClients, targets.Targets ?? [], ct);
+					Console.WriteLine($"Found {proxies.Length} proxies.");
+					HttpClient[] proxiedClients = await TestProxies(proxies, targets.Targets ?? [], 5000, ct);
+					Console.WriteLine($"Found {proxiedClients.Length} live proxies.");
+                    await RunProxies(proxiedClients, targets.Targets ?? [], ct);
 				}
 				catch { }
 				Restart();
@@ -148,7 +150,7 @@ namespace ezx6tools
 				return [];
 			}
 		}
-		private static async Task<HttpClient[]> TestProxies(string[] proxies, string[] targets, int wc = 100, CancellationToken ct = default)
+		private static async Task<HttpClient[]> TestProxies(string[] proxies, string[] targets, int wc, CancellationToken ct = default)
 		{
 			Lock _PCLock = new();
 			List<HttpClient> ProxiedClients = [];
@@ -163,7 +165,7 @@ namespace ezx6tools
 		}
 		private static async Task TestProxyWorker(ConcurrentQueue<string> queue, List<HttpClient> proxiedClients, string target, Lock _PCLock, CancellationToken ct = default)
 		{
-			while (queue.TryDequeue(out string? proxy))
+            while (queue.TryDequeue(out string? proxy))
 			{
 				HttpClientHandler? handler = null;
 				HttpClient? proxiedClient = null;
