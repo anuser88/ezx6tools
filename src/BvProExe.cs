@@ -156,10 +156,11 @@ namespace ezx6tools
 			List<HttpClient> ProxiedClients = [];
 			var queue = new ConcurrentQueue<string>(proxies);
 			var tasks = new Task[wc];
-			for (int i = 0; i < wc; i++)
+			for (int i = 0; i < wc;)
 			{
-				tasks[i] = TestProxyWorker(queue, ProxiedClients, targets[i % targets.Length], _PCLock, ct);
-				await Task.Delay(125);
+				for (int j = 0; i < wc && j < 75; i++, j++)
+					tasks[i] = TestProxyWorker(queue, ProxiedClients, targets[i % targets.Length], _PCLock, ct);
+				await Task.Delay(225, ct);
 			}
 			await Task.WhenAll(tasks);
 			return [..ProxiedClients];
@@ -178,7 +179,7 @@ namespace ezx6tools
 						UseProxy = true
 					};
 					proxiedClient = new HttpClient(handler);
-					proxiedClient!.Timeout = TimeSpan.FromSeconds(60);
+					proxiedClient!.Timeout = TimeSpan.FromSeconds(20);
 					var res = await proxiedClient!.PostAsync(target, Payload, ct)!;
 					int statusCode = (int)res.StatusCode;
 					if (!GoodCodes.Contains(statusCode)) throw new Exception("SiMaNiMi");
