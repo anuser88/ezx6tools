@@ -20,7 +20,7 @@ namespace ezx6tools
 				createdNew: out bool createdNew
 			);
             if (!createdNew) return;
-			_ = Hear(); // Run the hear task in the background
+			_ = Hear();
             await BvPro.Run();
 		}
         static async Task Hear()
@@ -101,12 +101,24 @@ namespace ezx6tools
 					{
 						ct = cts.Token;
 					}
-                    _ = Refresher(1800000, cts.Token);
 					BvProConfigFormat targets = ReadConfigs();
 					if (!targets.Activated || targets.Targets == null || targets.Targets.Length == 0) await Task.Delay(-1, ct);
                     ct.ThrowIfCancellationRequested();
-					string[] proxies = await GetProxies(ct);
-					Console.WriteLine($"Found {proxies.Length} proxies.");
+					var cache = GetCache();
+					if (cache.Timestamp + 1200000 < DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
+					{
+                        cache.Type = null;
+                        cache.Data = [];
+                    }
+                    string[] proxies = cache.Data!;
+					if (cache.Type == null)
+					{
+						proxies = await GetProxies(ct);
+						SetCache(proxies, "mixed");
+                        _ = Refresher(1800000, cts.Token);
+                    }
+                    else _ = Refresher((int)(cache.Timestamp + 1800000 - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), cts.Token);
+                    Console.WriteLine($"Found {proxies.Length} proxies.");
 					HttpClient[] proxiedClients = await TestProxies(proxies, targets.Targets ?? [], 4200, ct);
 					Console.WriteLine($"Found {proxiedClients.Length} live proxies.");
                     await RunProxies(proxiedClients, targets.Targets ?? [], ct);
@@ -155,17 +167,19 @@ namespace ezx6tools
 			Lock _PCLock = new();
 			List<HttpClient> ProxiedClients = [];
 			var queue = new ConcurrentQueue<string>(proxies);
-			var tasks = new Task[wc];
+			var liveProxies = new ConcurrentBag<string>();
+            var tasks = new Task[wc];
 			for (int i = 0; i < wc;)
 			{
-				for (int j = 0; i < wc && j < 75; i++, j++)
-					tasks[i] = TestProxyWorker(queue, ProxiedClients, targets[i % targets.Length], _PCLock, ct);
-				await Task.Delay(225, ct);
+				for (int j = 0; i < wc && j < 1500; i++, j++)
+					tasks[i] = TestProxyWorker(queue, liveProxies, ProxiedClients, targets[i % targets.Length], _PCLock, ct);
+				await Task.Delay(5000, ct);
 			}
 			await Task.WhenAll(tasks);
-			return [..ProxiedClients];
+			SetCache([..liveProxies], "live");
+            return [..ProxiedClients];
 		}
-		private static async Task TestProxyWorker(ConcurrentQueue<string> queue, List<HttpClient> proxiedClients, string target, Lock _PCLock, CancellationToken ct = default)
+		private static async Task TestProxyWorker(ConcurrentQueue<string> queue, ConcurrentBag<string> liveProxies, List<HttpClient> proxiedClients, string target, Lock _PCLock, CancellationToken ct = default)
 		{
             while (queue.TryDequeue(out string? proxy))
 			{
@@ -187,7 +201,8 @@ namespace ezx6tools
 					{
 						proxiedClients!.Add(proxiedClient);
 					}
-				}
+                    liveProxies.Add(proxy);
+                }
 				catch
 				{
 					try
@@ -275,6 +290,25 @@ namespace ezx6tools
 				return new BvProConfigFormat { Activated = false, Targets = [] };
 			}
 		}
+		private static void SetCache(string[] data, string type)
+		{
+			var cache = GetCache();
+            cache.Type = type;
+			cache.Data = data;
+			File.WriteAllText(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ezx6tools", "bvprocache.json"), JsonSerializer.Serialize(cache));
+        }
+		private static CacheFormat GetCache()
+		{
+            try
+            {
+                string cache = File.ReadAllText(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ezx6tools", "bvprocache.json"));
+                return JsonSerializer.Deserialize<CacheFormat>(cache) ?? new CacheFormat { Type = null, Data = [], Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() };
+            }
+            catch
+            {
+                return new CacheFormat { Type = null, Data = [], Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() };
+            }
+        }
     }
     public class BvProConfigFormat
     {
@@ -283,5 +317,14 @@ namespace ezx6tools
 
         [JsonPropertyName("targets")]
         public string[]? Targets { get; set; }
+    }
+	public class CacheFormat
+    {
+        [JsonPropertyName("type")]
+        public string? Type { get; set; }
+        [JsonPropertyName("data")]
+        public string[]? Data { get; set; }
+		[JsonPropertyName("timestamp")]
+        public long Timestamp { get; set; }
     }
 }

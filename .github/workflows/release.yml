@@ -52,6 +52,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v${{ steps.version.outputs.version }}" `
-            .\publish\ezx6tools.exe `
+            .\publish\ezx6tools.exe version.json `
             --title "Release v${{ steps.version.outputs.version }}" `
             --notes "Automated release v${{ steps.version.outputs.version }}"
